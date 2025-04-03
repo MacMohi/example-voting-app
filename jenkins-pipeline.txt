@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE_VOTE = "macmohi/vote:latest"
+        DOCKER_IMAGE_RESULT = "macmohi/result:latest"
+        DOCKER_IMAGE_WORKER = "macmohi/worker:latest"
+        GIT_REPOSITORY = "https://github.com/MacMohi/example-voting-app.git"
+        SYSDIG_ENDPOINT = "https://eu1.app.sysdig.com"
+    }
+    
+    stages {
+        stage('Checkout example-voting-app') {
+            steps {
+                cleanWs()
+                git branch: 'main', url: "$GIT_REPOSITORY"
+            }
+        }
+        
+        stage('Build vote') {
+            steps {
+                echo 'Build vote image'
+                sh "docker build -f ./vote/Dockerfile -t $DOCKER_IMAGE_VOTE ./vote"
+            }
+        }
+        
+        stage('Build result') {
+            steps {
+                echo 'Build result image'
+                sh "docker build -f ./result/Dockerfile -t $DOCKER_IMAGE_RESULT ./result"
+            }
+        }
+        
+        stage('Build worker') {
+            steps {
+                echo 'Build worker image'
+                sh "docker build -f ./worker/Dockerfile -t $DOCKER_IMAGE_WORKER ./worker"
+            }
+        }
+        
+        stage('Scanning all images') {
+            steps {
+                sh '''
+                VERSION=$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)
+                curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/${VERSION}/linux/amd64/sysdig-cli-scanner"
+                chmod +x ./sysdig-cli-scanner
+                '''
+                
+                withCredentials([string(credentialsId: 'SECRET_API_TOKEN', variable: 'SECURE_API_TOKEN')]) {
+                    script {
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_VOTE"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_RESULT"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_WORKER"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Push the images') {
+            steps {
+                script {
+                    echo 'Not needed right now for this demonstration'
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Post stages - success'
+        }
+        always {
+            //cleanWs()
+            echo 'Post stages - always'
+            
+            echo 'Clear docker build tmp files and remove images'
+            sh 'docker builder prune -f --all'
+            sh "docker rmi $DOCKER_IMAGE_VOTE $DOCKER_IMAGE_RESULT $DOCKER_IMAGE_WORKER"
+        }
+    }
+}
+
