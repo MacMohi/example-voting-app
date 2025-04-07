@@ -82,4 +82,54 @@ The Sysdig Monitor onboarding page also provides information how to install the 
 ### Sysdig Monitor
 
 The Sysdig Monitor Advisor describes the major components of the interface and the navigation options.
+
+In the Sysdig Monitor Advisor section, you can view your cluster's resource usage (CPU, memory) compared to the requests and limits set for your pods and containers, helping you identify potential resource misconfigurations and optimize resource allocation.
+
 ![image alt](https://github.com/MacMohi/example-voting-app/blob/1171d438959e4d89f536b398cbddabe898d46fda/images/sysdig_advisor.png)
+
+#### By comparing usage to requests and limits, you can pinpoint situations where: 
+- **Requests are too high**: Your pods might be requesting more resources than they actually need, leading to wasted resources.
+- **Limits are too low**: Your pods might be hitting resource limits, causing performance issues or even pod evictions.
+- **Requests are too low**: Your pods might be struggling to get enough resources, leading to throttling or instability
+
+### Sysdig Secure
+
+Scanning the image beeing used for the Voting App shows this results:
+
+![image alt](https://github.com/MacMohi/example-voting-app/blob/5881c0ef8e43d74cd6f70d75b6abfec60f08634e/images/scan-images.png)
+
+This result view indicates vulnerabilities, misconfigurations, and license violations, categorized by severity and type. Vulnerabilities with fixes available and those in images actively in use are highlighted as highest risk, requiring immediate attention.
+
+Additinally to the used image for Voting App, the vote, result and worker imgages are built and scanned with the cli scanner.
+This step is done within the CI process in Jenkins as you see in the [jenkinst-pipeline.txt](https://github.com/MacMohi/example-voting-app/blob/5881c0ef8e43d74cd6f70d75b6abfec60f08634e/jenkins-pipeline.txt)
+```sh
+stage('Scanning all images') {
+            steps {
+                sh '''
+                VERSION=$(curl -L -s https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt)
+                curl -LO "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/${VERSION}/linux/amd64/sysdig-cli-scanner"
+                chmod +x ./sysdig-cli-scanner
+                '''
+                
+                withCredentials([string(credentialsId: 'SECRET_API_TOKEN', variable: 'SECURE_API_TOKEN')]) {
+                    script {
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_VOTE"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_RESULT"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                        try {
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_WORKER"
+                        } catch (e) {
+                            println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
+                        }
+                    }
+                }
+            }
+        }
+```
