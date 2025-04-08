@@ -49,17 +49,17 @@ pipeline {
                 withCredentials([string(credentialsId: 'SECRET_API_TOKEN', variable: 'SECURE_API_TOKEN')]) {
                     script {
                         try {
-                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_VOTE"
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_VOTE --policy high-critical-not-fixed-yet"
                         } catch (e) {
                             println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
                         }
                         try {
-                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_RESULT"
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_RESULT --policy high-critical-not-fixed-yet"
                         } catch (e) {
                             println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
                         }
                         try {
-                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_WORKER"
+                            sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_WORKER --policy high-critical-not-fixed-yet"
                         } catch (e) {
                             println "Sysdig CLI Scanner failed, but let's continue with the whole demonstration: {e}"
                         }
