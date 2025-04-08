@@ -126,7 +126,7 @@ Scanning the image beeing used for the Voting App shows this results:
 This result view indicates vulnerabilities, misconfigurations, and license violations, categorized by severity and type. Vulnerabilities with fixes available and those in images actively in use are highlighted as highest risk, requiring immediate attention.
 
 Additinally to the used image for Voting App, the vote, result and worker imgages are built and scanned with the cli scanner.
-This step is done within the CI process in Jenkins as you see in the [jenkinst-pipeline.txt](https://github.com/MacMohi/example-voting-app/blob/5881c0ef8e43d74cd6f70d75b6abfec60f08634e/jenkins-pipeline.txt)
+This step is done within the CI process in Jenkins as you see in the [jenkins-pipeline.txt](https://github.com/MacMohi/example-voting-app/blob/5881c0ef8e43d74cd6f70d75b6abfec60f08634e/jenkins-pipeline.txt)
 ```sh
 stage('Scanning all images') {
             steps {
@@ -158,3 +158,20 @@ stage('Scanning all images') {
             }
         }
 ```
+
+
+
+### Create a policy
+Policy menu on the left | Policies (context menu). Create and save the policy.
+![image alt](https://github.com/MacMohi/example-voting-app/blob/d7b2bbfe82a1a4f7130d06060d71356741c06699/images/creating-policy.png)
+
+To use the policy in the pipeline while scanning an image with sysdig-cli-scanner, add option **--policy < your-policy-name >**
+```sh
+sh "./sysdig-cli-scanner -a $SYSDIG_ENDPOINT docker://$DOCKER_IMAGE_VOTE" --policy high-critical-not-fixed-yet
+```
+
+
+### Activity Audit
+Threats menu on the left | Activi Audit (context menu). You can monitor the activities in you pods.
+For example, when specific files are added or removed, it will be shown in this Activity view.
+![image alt](https://github.com/MacMohi/example-voting-app/blob/91047e83e073b9b9c2b4bd989a065dc53f2f16d8/images/forensics-activity.png)
