@@ -79,7 +79,7 @@ The Sysdig Monitor onboarding page also provides information how to install the 
 ![image alt](https://github.com/MacMohi/example-voting-app/blob/cc00f007a35eb9c46109844315bdb3be0c679858/images/install_sysdig_agent.png)
 
 
-### Sysdig Monitor
+## Sysdig Monitor
 
 The Sysdig Monitor Advisor describes the major components of the interface and the navigation options.
 
@@ -92,7 +92,32 @@ In the Sysdig Monitor Advisor section, you can view your cluster's resource usag
 - **Limits are too low**: Your pods might be hitting resource limits, causing performance issues or even pod evictions.
 - **Requests are too low**: Your pods might be struggling to get enough resources, leading to throttling or instability
 
-### Sysdig Secure
+### Dashboard
+Creating a Dashbard can be simply used using using PromQL queries. For more information about PromQL [refer to this page](https://docs.sysdig.com/en/sysdig-monitor/using-promql-query/)
+
+For this example I created for queries to show on the Dashboard:
+
+Show CPU consumption in percentage value
+```sh
+sysdig_host_cpu_used_percent
+```
+The memory consumption
+```sh
+sum by (kube_cluster_name, kube_namespace_name, kube_workload_type, kube_workload_name) (sysdig_container_memory_used_bytes)
+```
+CPU Cores used within kubernetes namespace
+```sh
+sum by (kube_namespace_name) (sysdig_container_cpu_cores_used)
+```
+Memory consumption by namespaces "sysdig-agent" and "default" where the voting app is deployed in.
+```sh
+sum by (kube_cluster_name, kube_namespace_name) (sysdig_container_memory_used_bytes)
+```
+
+The Dashboard would lool like this one
+![image alt](https://github.com/MacMohi/example-voting-app/blob/9dde529b910e044f8757be56dd140a834b41e778/images/Dashboard_PromQL.png)
+
+## Sysdig Secure
 
 Scanning the image beeing used for the Voting App shows this results:
 
